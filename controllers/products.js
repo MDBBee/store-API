@@ -1,13 +1,42 @@
 const Product = require("../models/product");
 
-const getAllProductsStatic = (req, res) => {
-  res.status(200).json({ sucess: true, data: "All static products!" });
+const getAllProductsStatic = async (req, res) => {
+  const prods = await Product.find({ name: { $regex: "ba", $options: "i" } });
+  res.status(200).json({ noht: prods.length, sucess: true, data: prods });
 };
 const getAllProducts = async (req, res) => {
-  console.log(req.query);
+  const { featured, company, name, sort, fields, numericFilters } = req.query;
+  const queryOBJ = {};
 
-  const products = await Product.find(req.query);
-  res.status(200).json({ products, noHits: products.length });
+  if (featured) {
+    queryOBJ.featured = featured === "true" ? true : false;
+  }
+
+  if (company) {
+    queryOBJ.company = company;
+  }
+
+  if (name) {
+    queryOBJ.name = { $regex: name, $options: "i" };
+  }
+  let results = Product.find(queryOBJ);
+
+  if (sort) {
+    const sorta = sort.split(",").join(" ");
+    results = results.sort(sorta);
+  }
+
+  if (fields) {
+    const fielda = fields.split(",").join(" ");
+    console.log(fielda);
+    results = results.select(fielda);
+  }
+
+  if (numericFilters) {
+  }
+  const products = await results;
+
+  res.status(200).json({ noHits: products.length, products });
 };
 
 module.exports = { getAllProducts, getAllProductsStatic };
